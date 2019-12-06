@@ -3,25 +3,9 @@
 *  See LICENSE in the source repository root for complete license information.
 */
 
-var express = require('express');
-var app = express();
-var morgan = require('morgan');
-var path = require('path');
-
 // Initialize variables.
-var PORT = 30662;
-
-// Configure morgan module to log all requests.
-app.use(morgan('dev'));
-
-// Set the front-end folder to serve public assets.
-app.use("/dist", express.static(path.join(__dirname, "../../lib/msal-core/dist")));
-
-// Set up our one route to the index.html file.
-app.get('*', function (req, res) {
-    const reqPath = req.path === "/" ? "/index.html" : req.path;
-    res.sendFile(path.join(__dirname + reqPath));
-});
+const app = require("./app");
+const PORT = 30662;
 
 // Start the server.
 app.listen(PORT, function() {
