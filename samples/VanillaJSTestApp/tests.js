@@ -21,7 +21,7 @@ app.listen(PORT, function() {
           // enter username
           await result.screenshot({path: 'popup.png'});
           const emailIP = await result.$("input[type='email']");
-          emailIP.type("sameera.gajjarapu@outlook.com");
+          emailIP.type("<Please enter your email id>");
           await result.screenshot({path: 'username.png'});
 
           // submit the username
@@ -33,7 +33,7 @@ app.listen(PORT, function() {
 
           // enter password
           const pwdIP = await result.$("input[type='password']");
-          pwdIP.type("outlook$9");
+          pwdIP.type("<Please enter your password>");
           await result.screenshot({path: 'password.png'});
 
           // submit the password
