@@ -6,11 +6,8 @@
 /**
  * @hidden
  */
-import { AadAuthority } from "./AadAuthority";
-import { B2cAuthority } from "./B2cAuthority";
 import { Authority } from "./Authority";
 import { StringUtils } from "../utils/StringUtils";
-import { B2CTrustedHostList } from "../utils/Constants";
 
 export class AuthorityFactory {
 
@@ -24,7 +21,7 @@ export class AuthorityFactory {
         }
 
         // Depending on above detection, create the right type.
-        return Object.keys(B2CTrustedHostList).length? new B2cAuthority(authorityUrl, validateAuthority): new AadAuthority(authorityUrl, validateAuthority);
+        return new Authority(authorityUrl, validateAuthority);
     }
 
 }

@@ -8,6 +8,7 @@ import { ITenantDiscoveryResponse } from "./ITenantDiscoveryResponse";
 import { ClientConfigurationErrorMessage } from "../error/ClientConfigurationError";
 import { XhrClient } from "../XHRClient";
 import { UrlUtils } from "../utils/UrlUtils";
+import { AADTrustedHostList, B2CTrustedHostList } from "../utils/Constants";
 
 /**
  * @hidden
@@ -15,29 +16,42 @@ import { UrlUtils } from "../utils/UrlUtils";
 export enum AuthorityType {
     Aad,
     Adfs,
-    B2C
+    B2C,
+    Unknown
 }
 
 /**
  * @hidden
  */
-export abstract class Authority {
+export class Authority {
     constructor(authority: string, validateAuthority: boolean) {
         this.IsValidationEnabled = validateAuthority;
         this.CanonicalAuthority = authority;
+        this.authorityType = AuthorityType.Unknown;
 
         this.validateAsUri();
+        this.IsTrusted = this.IsInTrustedHostList(this.CanonicalAuthorityUrlComponents.HostNameAndPort);
     }
 
-    public abstract get AuthorityType(): AuthorityType;
+    public get AuthorityType(): AuthorityType {
+        return this.authorityType;
+    };
 
     public IsValidationEnabled: boolean;
+    public authorityType: AuthorityType;
+    public IsTrusted: boolean;
 
     public get Tenant(): string {
         return this.CanonicalAuthorityUrlComponents.PathSegments[0];
     }
 
     private tenantDiscoveryResponse: ITenantDiscoveryResponse;
+
+    private static readonly AadInstanceDiscoveryEndpoint: string = "https://login.microsoftonline.com/common/discovery/instance";
+
+    private get AadInstanceDiscoveryEndpointUrl(): string {
+        return `${Authority.AadInstanceDiscoveryEndpoint}?api-version=1.0&authorization_endpoint=${this.CanonicalAuthority}oauth2/v2.0/authorize`;
+    }
 
     public get AuthorizationEndpoint(): string {
         this.validateResolved();
@@ -141,5 +155,36 @@ export abstract class Authority {
     /**
      * Returns a promise with the TenantDiscoveryEndpoint
      */
-    public abstract GetOpenIdConfigurationEndpointAsync(): Promise<string>;
+    public async GetOpenIdConfigurationEndpointAsync(): Promise<string> {
+        if (!this.IsValidationEnabled || this.IsTrusted) {
+            return this.DefaultOpenIdConfigurationEndpoint;
+        }
+
+        // for custom domains in AAD where we query the service for the Instance discovery
+        const client: XhrClient = new XhrClient();
+
+        return client.sendRequestAsync(this.AadInstanceDiscoveryEndpointUrl, "GET", true)
+            .then((response) => {
+                if (response.tenant_discovery_endpoint) {
+                    this.authorityType = AuthorityType.Aad;
+                }
+                return response.tenant_discovery_endpoint;
+            });
+    }
+
+    /**
+     * Checks to see if the host is in a list of trusted hosts
+     * @param {string} The host to look up
+     */
+    public IsInTrustedHostList(host: string): boolean {
+        if (AADTrustedHostList[host.toLowerCase()]){
+            this.authorityType = AuthorityType.Aad;
+            return true;
+        } else if (B2CTrustedHostList[host.toLowerCase()]){
+            this.authorityType = AuthorityType.B2C;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

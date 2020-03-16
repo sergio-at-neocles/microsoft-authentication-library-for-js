@@ -1,4 +1,3 @@
-import { B2cAuthority } from "../authority/B2cAuthority";
 import { AADTrustedHostList } from "../utils/Constants";
 import { TENANT_PLACEHOLDER, EVENT_NAME_PREFIX } from "./TelemetryConstants";
 import { CryptoUtils } from "../utils/CryptoUtils";
@@ -17,7 +16,7 @@ export const scrubTenantFromUri = (uri: string): String => {
     const pathParams = url.PathSegments;
 
     if (pathParams && pathParams.length >= 2) {
-        const tenantPosition = pathParams[1] ===  B2cAuthority.B2C_PREFIX ? 2 : 1;
+        const tenantPosition = 1;
         if (tenantPosition < pathParams.length) {
             pathParams[tenantPosition] = TENANT_PLACEHOLDER;
         }
