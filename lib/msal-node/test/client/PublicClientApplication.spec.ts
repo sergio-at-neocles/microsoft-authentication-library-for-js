@@ -1,4 +1,4 @@
-const { PublicClientApplication } = require('./../dist/');
+import { PublicClientApplication } from './../../src/client/PublicClientApplication';
 
 describe('PublicClientApplication', () => {
     test('exports a class', () => {
